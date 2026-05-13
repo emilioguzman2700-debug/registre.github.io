@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brigade Instructrice — Yugen Demon Slayer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c; --gold-light: #e8c97a; --gold-dark: #8a6a1f;
+    --blood: #8b1a1a; --dark-bg: #0a0806; --panel-bg: #100e0a;
+    --panel-border: #2a2218; --text-main: #e8dcc8; --text-muted: #8a7a5a; --text-dim: #4a3e2a;
+    --water: #2a6b8a; --flame: #d4542a; --flower: #c45a8a; --thunder: #c4a020;
+    --mist: #5a8a8a; --sound: #8a5a8a; --rock: #7a6a4a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--dark-bg); color: var(--text-main); font-family: 'Crimson Pro', Georgia, serif; font-size: 17px; line-height: 1.7; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,168,76,0.015) 60px, rgba(201,168,76,0.015) 61px), repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,168,76,0.015) 60px, rgba(201,168,76,0.015) 61px); pointer-events: none; z-index: 0; }
+
+  #loader { position: fixed; inset: 0; background: var(--dark-bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; transition: opacity 0.5s; }
+  #loader.hidden { opacity: 0; pointer-events: none; }
+  .loader-ring { width: 48px; height: 48px; border: 1px solid var(--panel-border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase; }
+
+  header { position: relative; text-align: center; padding: 60px 20px 50px; border-bottom: 1px solid var(--panel-border); overflow: hidden; }
+  header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%); pointer-events: none; }
+  .header-emblem { width: 80px; height: 80px; margin: 0 auto 20px; }
+  .header-emblem svg { width: 100%; height: 100%; }
+  .server-tag { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 4px; color: var(--gold-dark); text-transform: uppercase; margin-bottom: 12px; }
+  h1 { font-family: 'Cinzel', serif; font-size: clamp(28px, 5vw, 52px); font-weight: 900; color: var(--gold); letter-spacing: 2px; text-shadow: 0 0 40px rgba(201,168,76,0.3); line-height: 1.1; margin-bottom: 8px; }
+  .header-sub { font-size: 14px; color: var(--text-muted); letter-spacing: 3px; text-transform: uppercase; font-weight: 300; }
+  .divider { display: flex; align-items: center; gap: 16px; margin: 24px auto; max-width: 400px; }
+  .divider::before { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--gold-dark)); }
+  .divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to left, transparent, var(--gold-dark)); }
+  .divider-diamond { width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); }
+  .sync-indicator { display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; justify-content: center; margin-top: 8px; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
+  .sync-dot.live { background: #5a9a5a; animation: pulse 2s ease infinite; }
+  .sync-dot.error { background: #9a5a5a; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--panel-border); border-top: 1px solid var(--panel-border); border-bottom: 1px solid var(--panel-border); position: relative; z-index: 1; }
+  .stat-block { background: var(--panel-bg); padding: 24px 20px; text-align: center; transition: background 0.2s; }
+  .stat-block:hover { background: #14110d; }
+  .stat-number { font-family: 'Cinzel', serif; font-size: 36px; font-weight: 700; color: var(--gold); display: block; line-height: 1; }
+  .stat-label { font-size: 12px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-top: 6px; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+  .main-grid { display: grid; grid-template-columns: 1fr 360px; gap: 0; min-height: calc(100vh - 300px); }
+  .panel-main { border-right: 1px solid var(--panel-border); padding: 40px 40px 40px 0; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid var(--panel-border); }
+  .section-title { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+  .section-title::before { content: ''; width: 20px; height: 1px; background: var(--gold); }
+
+  .form-card { background: var(--panel-bg); border: 1px solid var(--panel-border); padding: 32px; margin-bottom: 32px; position: relative; }
+  .form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; letter-spacing: 2.5px; color: var(--text-muted); text-transform: uppercase; font-family: 'Cinzel', serif; }
+  input[type="text"], input[type="date"], select { background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border); color: var(--text-main); padding: 12px 16px; font-family: 'Crimson Pro', serif; font-size: 16px; outline: none; transition: border-color 0.2s, background 0.2s; width: 100%; appearance: none; }
+  input[type="text"]:focus, input[type="date"]:focus, select:focus { border-color: var(--gold-dark); background: rgba(201,168,76,0.04); }
+  input[type="text"]::placeholder { color: var(--text-dim); }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.4) sepia(1) saturate(0.5) hue-rotate(10deg); cursor: pointer; }
+  select option { background: #1a1510; }
+
+  .radio-group { display: flex; border: 1px solid var(--panel-border); }
+  .radio-group label { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-family: 'Crimson Pro', serif; font-size: 15px; letter-spacing: 1px; text-transform: none; color: var(--text-muted); border-right: 1px solid var(--panel-border); transition: all 0.2s; }
+  .radio-group label:last-child { border-right: none; }
+  .radio-group input[type="radio"] { display: none; }
+  .radio-group input[type="radio"]:checked + label { background: rgba(201,168,76,0.1); color: var(--gold); }
+
+  .souffle-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .souffle-option input { display: none; }
+  .souffle-pill { display: block; text-align: center; padding: 10px 4px; border: 1px solid var(--panel-border); cursor: pointer; font-size: 12px; letter-spacing: 0.5px; color: var(--text-muted); transition: all 0.2s; font-family: 'Cinzel', serif; }
+  .souffle-option input:checked + .souffle-pill { border-color: currentColor; }
+  .souffle-roche input:checked + .souffle-pill { color: var(--rock); background: rgba(122,106,74,0.12); }
+  .souffle-flamme input:checked + .souffle-pill { color: var(--flame); background: rgba(212,84,42,0.12); }
+  .souffle-fleur input:checked + .souffle-pill { color: var(--flower); background: rgba(196,90,138,0.12); }
+  .souffle-foudre input:checked + .souffle-pill { color: var(--thunder); background: rgba(196,160,32,0.12); }
+  .souffle-brume input:checked + .souffle-pill { color: var(--mist); background: rgba(90,138,138,0.12); }
+  .souffle-son input:checked + .souffle-pill { color: var(--sound); background: rgba(138,90,138,0.12); }
+  .souffle-eau input:checked + .souffle-pill { color: var(--water); background: rgba(42,107,138,0.12); }
+  .souffle-icon { font-size: 16px; display: block; margin-bottom: 4px; }
+
+  .btn-submit { width: 100%; padding: 16px; background: transparent; border: 1px solid var(--gold-dark); color: var(--gold); font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; margin-top: 24px; transition: all 0.2s; position: relative; overflow: hidden; }
+  .btn-submit::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, transparent, rgba(201,168,76,0.08), transparent); transform: translateX(-100%); transition: transform 0.4s; }
+  .btn-submit:hover::before { transform: translateX(100%); }
+  .btn-submit:hover { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .search-input { background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border); color: var(--text-main); padding: 10px 14px; font-family: 'Crimson Pro', serif; font-size: 15px; outline: none; width: 240px; }
+  .search-input:focus { border-color: var(--gold-dark); }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .registre-item { border: 1px solid var(--panel-border); margin-bottom: 10px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .registre-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .registre-item.souffle-roche::before { background: var(--rock); }
+  .registre-item.souffle-flamme::before { background: var(--flame); }
+  .registre-item.souffle-fleur::before { background: var(--flower); }
+  .registre-item.souffle-foudre::before { background: var(--thunder); }
+  .registre-item.souffle-brume::before { background: var(--mist); }
+  .registre-item.souffle-son::before { background: var(--sound); }
+  .registre-item.souffle-eau::before { background: var(--water); }
+  .registre-item:hover { border-color: var(--text-dim); background: rgba(255,255,255,0.01); }
+
+  .registre-summary { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 16px; padding: 14px 16px 14px 20px; }
+  .registre-nom { font-family: 'Cinzel', serif; font-size: 14px; color: var(--text-main); }
+  .registre-date { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+  .badge-souffle { font-size: 11px; letter-spacing: 1px; padding: 3px 10px; border: 1px solid; font-family: 'Cinzel', serif; }
+  .badge-doc { font-size: 11px; padding: 3px 8px; }
+  .badge-doc.donne { color: #5a9a5a; border: 1px solid rgba(90,154,90,0.3); background: rgba(90,154,90,0.08); }
+  .badge-doc.pas-donne { color: var(--text-dim); border: 1px solid var(--panel-border); }
+  .souffle-roche .badge-souffle { color: var(--rock); border-color: rgba(122,106,74,0.4); }
+  .souffle-flamme .badge-souffle { color: var(--flame); border-color: rgba(212,84,42,0.4); }
+  .souffle-fleur .badge-souffle { color: var(--flower); border-color: rgba(196,90,138,0.4); }
+  .souffle-foudre .badge-souffle { color: var(--thunder); border-color: rgba(196,160,32,0.4); }
+  .souffle-brume .badge-souffle { color: var(--mist); border-color: rgba(90,138,138,0.4); }
+  .souffle-son .badge-souffle { color: var(--sound); border-color: rgba(138,90,138,0.4); }
+  .souffle-eau .badge-souffle { color: var(--water); border-color: rgba(42,107,138,0.4); }
+
+  .registre-detail { display: none; padding: 0 20px 16px 20px; border-top: 1px solid var(--panel-border); animation: fadeIn 0.2s ease; }
+  .registre-item.expanded .registre-detail { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px; }
+  .detail-field label { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; font-family: 'Cinzel', serif; display: block; margin-bottom: 4px; }
+  .detail-field span { font-size: 15px; color: var(--text-main); }
+  .btn-delete { background: transparent; border: 1px solid rgba(139,26,26,0.4); color: #8b4a4a; padding: 6px 14px; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; margin-top: 14px; }
+  .btn-delete:hover { border-color: var(--blood); color: #c47a7a; background: rgba(139,26,26,0.08); }
+
+  .panel-side { padding: 40px 0 40px 36px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .instructeur-card { background: var(--panel-bg); border: 1px solid var(--panel-border); padding: 16px 20px; margin-bottom: 10px; transition: all 0.2s; }
+  .instructeur-card:hover { border-color: var(--text-dim); }
+  .inst-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .inst-nom { font-family: 'Cinzel', serif; font-size: 14px; color: var(--text-main); }
+  .inst-count { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; color: var(--gold); }
+  .inst-label { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
+  .inst-bar-bg { height: 2px; background: var(--panel-border); margin-top: 10px; }
+  .inst-bar { height: 2px; background: var(--gold); transition: width 0.4s ease; }
+  .inst-add { display: flex; gap: 8px; margin-bottom: 20px; }
+  .inst-add input { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border); color: var(--text-main); padding: 10px 14px; font-family: 'Crimson Pro', serif; font-size: 15px; outline: none; }
+  .inst-add input:focus { border-color: var(--gold-dark); }
+  .inst-add input::placeholder { color: var(--text-dim); }
+  .btn-add-inst { padding: 10px 16px; background: transparent; border: 1px solid var(--gold-dark); color: var(--gold-dark); font-family: 'Cinzel', serif; font-size: 16px; cursor: pointer; transition: all 0.2s; }
+  .btn-add-inst:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-retirer { background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; letter-spacing: 1px; font-family: 'Cinzel', serif; margin-top: 2px; transition: color 0.2s; }
+  .btn-retirer:hover { color: #c47a7a; }
+  .btn-reset { width: 100%; padding: 14px; background: transparent; border: 1px solid rgba(139,26,26,0.5); color: #8b4a4a; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin-top: 24px; transition: all 0.2s; }
+  .btn-reset:hover { border-color: var(--blood); color: #c47a7a; background: rgba(139,26,26,0.08); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal { background: var(--panel-bg); border: 1px solid var(--panel-border); padding: 40px; max-width: 440px; width: 90%; text-align: center; position: relative; }
+  .modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, transparent, var(--blood), transparent); }
+  .modal h3 { font-family: 'Cinzel', serif; font-size: 18px; color: #c47a7a; margin-bottom: 12px; }
+  .modal p { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+  .modal-btns { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+  .btn-cancel { padding: 12px 28px; background: transparent; border: 1px solid var(--panel-border); color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+  .btn-cancel:hover { border-color: var(--text-muted); color: var(--text-main); }
+  .btn-confirm-reset { padding: 12px 28px; background: transparent; border: 1px solid var(--blood); color: #c47a7a; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+  .btn-confirm-reset:hover { background: rgba(139,26,26,0.15); color: #e08a8a; }
+
+  .toast { position: fixed; bottom: 30px; right: 30px; background: var(--panel-bg); border: 1px solid var(--gold-dark); color: var(--gold); padding: 14px 24px; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 1px; transform: translateY(20px); opacity: 0; transition: all 0.3s; z-index: 200; }
+  .toast.show { transform: none; opacity: 1; }
+  .toast.error { border-color: var(--blood); color: #c47a7a; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); font-style: italic; font-size: 15px; }
+  footer { border-top: 1px solid var(--panel-border); padding: 30px 20px; text-align: center; color: var(--text-dim); font-size: 13px; letter-spacing: 2px; font-family: 'Cinzel', serif; text-transform: uppercase; position: relative; z-index: 1; }
+  footer span { color: var(--gold-dark); }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--dark-bg); } ::-webkit-scrollbar-thumb { background: var(--panel-border); }
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .panel-main { border-right: none; padding: 30px 0; }
+    .panel-side { position: static; height: auto; padding: 30px 0; border-top: 1px solid var(--panel-border); }
+    .form-grid { grid-template-columns: 1fr; }
+    .souffle-grid { grid-template-columns: repeat(4, 1fr); }
+    .registre-summary { grid-template-columns: 1fr auto; }
+    .registre-date { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Connexion en cours...</div>
+</div>
+
+<header>
+  <div class="header-emblem">
+    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="40,4 74,22 74,58 40,76 6,58 6,22" fill="none" stroke="#8a6a1f" stroke-width="1"/>
+      <polygon points="40,12 66,26 66,54 40,68 14,54 14,26" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.5"/>
+      <line x1="40" y1="4" x2="40" y2="76" stroke="#2a2218" stroke-width="0.5"/>
+      <line x1="6" y1="22" x2="74" y2="58" stroke="#2a2218" stroke-width="0.5"/>
+      <line x1="74" y1="22" x2="6" y2="58" stroke="#2a2218" stroke-width="0.5"/>
+      <circle cx="40" cy="40" r="10" fill="none" stroke="#c9a84c" stroke-width="1"/>
+      <circle cx="40" cy="40" r="3" fill="#c9a84c"/>
+    </svg>
+  </div>
+  <p class="server-tag">Yugen Demon Slayer — Garry's Mod</p>
+  <h1>Brigade Instructrice</h1>
+  <p class="header-sub">Registre des Aspirants</p>
+  <div class="divider"><div class="divider-diamond"></div></div>
+  <div class="sync-indicator">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncLabel">Connexion...</span>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-block"><span class="stat-number" id="statTotal">—</span><div class="stat-label">Formations totales</div></div>
+  <div class="stat-block"><span class="stat-number" id="statSemaine">—</span><div class="stat-label">Cette semaine</div></div>
+  <div class="stat-block"><span class="stat-number" id="statDoc">—</span><div class="stat-label">Docs remis</div></div>
+  <div class="stat-block"><span class="stat-number" id="statSouffle">—</span><div class="stat-label">Souffle populaire</div></div>
+</div>
+
+<div class="container">
+  <div class="main-grid">
+    <div class="panel-main">
+      <div class="section-header"><h2 class="section-title">Nouveau Registre</h2></div>
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-group"><label>Nom RP</label><input type="text" id="nomRP" placeholder="Ex : Tanjiro Kamado"></div>
+          <div class="form-group"><label>Date de Formation</label><input type="date" id="dateFormation"></div>
+          <div class="form-group"><label>Steam ID</label><input type="text" id="steamID" placeholder="STEAM_0:0:000000"></div>
+          <div class="form-group">
+            <label>Instructeur</label>
+            <select id="instructeurSelect"><option value="">— Choisir un instructeur —</option></select>
+          </div>
+          <div class="form-group">
+            <label>Documentation</label>
+            <div class="radio-group">
+              <input type="radio" name="doc" id="docDonne" value="Donné"><label for="docDonne">✦ Donné</label>
+              <input type="radio" name="doc" id="docPas" value="Pas Donné" checked><label for="docPas">Pas Donné</label>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Souffle Choisi</label>
+            <div class="souffle-grid">
+              <div class="souffle-option souffle-roche"><input type="radio" name="souffle" id="s-roche" value="Roche"><label class="souffle-pill" for="s-roche"><span class="souffle-icon">⬡</span>Roche</label></div>
+              <div class="souffle-option souffle-flamme"><input type="radio" name="souffle" id="s-flamme" value="Flamme"><label class="souffle-pill" for="s-flamme"><span class="souffle-icon">🔥</span>Flamme</label></div>
+              <div class="souffle-option souffle-fleur"><input type="radio" name="souffle" id="s-fleur" value="Fleur"><label class="souffle-pill" for="s-fleur"><span class="souffle-icon">✿</span>Fleur</label></div>
+              <div class="souffle-option souffle-foudre"><input type="radio" name="souffle" id="s-foudre" value="Foudre"><label class="souffle-pill" for="s-foudre"><span class="souffle-icon">⚡</span>Foudre</label></div>
+              <div class="souffle-option souffle-brume"><input type="radio" name="souffle" id="s-brume" value="Brume"><label class="souffle-pill" for="s-brume"><span class="souffle-icon">〰</span>Brume</label></div>
+              <div class="souffle-option souffle-son"><input type="radio" name="souffle" id="s-son" value="Son"><label class="souffle-pill" for="s-son"><span class="souffle-icon">♪</span>Son</label></div>
+              <div class="souffle-option souffle-eau"><input type="radio" name="souffle" id="s-eau" value="Eau"><label class="souffle-pill" for="s-eau"><span class="souffle-icon">〜</span>Eau</label></div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-submit" id="btnSubmit">✦ Enregistrer l'Aspirant</button>
+      </div>
+      <div class="section-header">
+        <h2 class="section-title">Registres</h2>
+        <input class="search-input" type="text" id="searchInput" placeholder="Rechercher un nom...">
+      </div>
+      <div id="listeRegistres"><div class="empty-state">Chargement...</div></div>
+    </div>
+
+    <div class="panel-side">
+      <div class="section-header"><h2 class="section-title">Instructeurs</h2></div>
+      <div class="inst-add">
+        <input type="text" id="newInstNom" placeholder="Nom de l'instructeur...">
+        <button class="btn-add-inst" id="btnAddInst">+</button>
+      </div>
+      <div id="listeInstructeurs"><div class="empty-state" style="padding:20px 0;">Chargement...</div></div>
+      <button class="btn-reset" id="btnReset">⚠ Remettre à Zéro</button>
+    </div>
+  </div>
+</div>
+
+<footer>Créé par <span>Neyto Dashiki</span> &mdash; Brigade Instructrice &mdash; Yugen Demon Slayer</footer>
+
+<div class="modal-overlay" id="modalReset">
+  <div class="modal">
+    <h3>⚠ Remettre à Zéro</h3>
+    <p>Cette action supprimera l'intégralité des registres d'aspirants et remettra toutes les statistiques à zéro.</p>
+    <p style="font-family:'Cinzel',serif;font-size:13px;color:#8b4a4a;letter-spacing:1px;">Les instructeurs seront conservés. Action irréversible.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="btnCancelReset">Annuler</button>
+      <button class="btn-confirm-reset" id="btnConfirmReset">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, addDoc, deleteDoc,
+  getDocs, onSnapshot, writeBatch, updateDoc, increment
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC3_0oKlSnJRgckWT3yeizkJDjhwOy8SpQ",
+  authDomain: "briage-instructrice-registre.firebaseapp.com",
+  projectId: "briage-instructrice-registre",
+  storageBucket: "briage-instructrice-registre.firebasestorage.app",
+  messagingSenderId: "766104685314",
+  appId: "1:766104685314:web:90ee68e6882b814086101b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const registresCol = collection(db, "registres");
+const instructeursCol = collection(db, "instructeurs");
+
+const souffleClasses = { Roche:'souffle-roche', Flamme:'souffle-flamme', Fleur:'souffle-fleur', Foudre:'souffle-foudre', Brume:'souffle-brume', Son:'souffle-son', Eau:'souffle-eau' };
+
+let registres = [];
+let instructeurs = [];
+
+// UI refs
+const $id = id => document.getElementById(id);
+
+function showToast(msg, err=false) {
+  const t = $id('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (err ? ' error' : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function setSyncStatus(s) {
+  const dot = $id('syncDot'), lbl = $id('syncLabel');
+  if (s === 'live') { dot.className = 'sync-dot live'; lbl.textContent = 'En direct'; }
+  else if (s === 'error') { dot.className = 'sync-dot error'; lbl.textContent = 'Erreur de connexion'; }
+  else { dot.className = 'sync-dot'; lbl.textContent = 'Connexion...'; }
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const [y,m,j] = d.split('-');
+  return `${j}/${m}/${y}`;
+}
+
+function updateStats() {
+  $id('statTotal').textContent = registres.length;
+  const sem = new Date(); sem.setDate(sem.getDate() - 7);
+  $id('statSemaine').textContent = registres.filter(r => r.date && new Date(r.date) >= sem).length;
+  $id('statDoc').textContent = registres.filter(r => r.doc === 'Donné').length;
+  const counts = {};
+  registres.forEach(r => { if (r.souffle) counts[r.souffle] = (counts[r.souffle]||0)+1; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  $id('statSouffle').textContent = top ? top[0] : '—';
+}
+
+function updateSelectInstructeur() {
+  const sel = $id('instructeurSelect');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">— Choisir un instructeur —</option>' +
+    instructeurs.map(i => `<option value="${i.nom}">${i.nom}</option>`).join('');
+  sel.value = val;
+}
+
+function renderRegistres() {
+  const filtre = $id('searchInput').value.toLowerCase();
+  const container = $id('listeRegistres');
+  const liste = filtre ? registres.filter(r => r.nom.toLowerCase().includes(filtre)) : registres;
+  if (!liste.length) { container.innerHTML = '<div class="empty-state">Aucun registre trouvé.</div>'; return; }
+  container.innerHTML = liste.map(r => `
+    <div class="registre-item ${souffleClasses[r.souffle]||''}" id="item-${r.id}">
+      <div class="registre-summary" onclick="document.getElementById('item-${r.id}').classList.toggle('expanded')">
+        <span class="registre-nom">${r.nom}</span>
+        <span class="registre-date">${formatDate(r.date)}</span>
+        <span class="badge-souffle">${r.souffle||'—'}</span>
+        <span class="badge-doc ${r.doc==='Donné'?'donne':'pas-donne'}">${r.doc==='Donné'?'✦':'○'}</span>
+      </div>
+      <div class="registre-detail">
+        <div class="detail-grid">
+          <div class="detail-field"><label>Steam ID</label><span>${r.steam||'—'}</span></div>
+          <div class="detail-field"><label>Instructeur</label><span>${r.instructeur||'—'}</span></div>
+          <div class="detail-field"><label>Documentation</label><span style="color:${r.doc==='Donné'?'#5a9a5a':'var(--text-muted)'}">${r.doc}</span></div>
+        </div>
+        <button class="btn-delete" data-id="${r.id}" data-inst="${r.instructeur||''}">Supprimer ce registre</button>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', () => supprimerRegistre(btn.dataset.id, btn.dataset.inst));
+  });
+}
+
+function renderInstructeurs() {
+  const container = $id('listeInstructeurs');
+  if (!instructeurs.length) { container.innerHTML = '<div class="empty-state" style="padding:20px 0;">Aucun instructeur.</div>'; return; }
+  const sorted = [...instructeurs].sort((a,b)=>(b.count||0)-(a.count||0));
+  const max = sorted[0]?.count || 1;
+  container.innerHTML = sorted.map(inst => `
+    <div class="instructeur-card">
+      <div class="inst-header">
+        <div>
+          <div class="inst-nom">${inst.nom}</div>
+          <div class="inst-label">formations effectuées</div>
+        </div>
+        <div style="text-align:right">
+          <div class="inst-count">${inst.count||0}</div>
+          <button class="btn-retirer" data-id="${inst.id}" data-nom="${inst.nom}">Retirer</button>
+        </div>
+      </div>
+      <div class="inst-bar-bg"><div class="inst-bar" style="width:${max>0?Math.round(((inst.count||0)/max)*100):0}%"></div></div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.btn-retirer').forEach(btn => {
+    btn.addEventListener('click', () => supprimerInstructeur(btn.dataset.id, btn.dataset.nom));
+  });
+}
+
+// Listeners temps réel
+onSnapshot(registresCol, snap => {
+  registres = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  registres.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  renderRegistres();
+  updateStats();
+  setSyncStatus('live');
+  $id('loader').classList.add('hidden');
+}, () => setSyncStatus('error'));
+
+onSnapshot(instructeursCol, snap => {
+  instructeurs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderInstructeurs();
+  updateSelectInstructeur();
+}, () => setSyncStatus('error'));
+
+// Ajouter registre
+$id('btnSubmit').addEventListener('click', async () => {
+  const nom = $id('nomRP').value.trim();
+  const date = $id('dateFormation').value;
+  const steam = $id('steamID').value.trim();
+  const instructeur = $id('instructeurSelect').value;
+  const docVal = document.querySelector('input[name="doc"]:checked')?.value || 'Pas Donné';
+  const souffle = document.querySelector('input[name="souffle"]:checked')?.value || '';
+
+  if (!nom) return showToast('Le nom RP est requis.', true);
+  if (!date) return showToast('La date est requise.', true);
+  if (!souffle) return showToast('Choisissez un souffle.', true);
+  if (!instructeur) return showToast('Choisissez un instructeur.', true);
+
+  const btn = $id('btnSubmit');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  try {
+    await addDoc(registresCol, { nom, date, steam, doc: docVal, souffle, instructeur, createdAt: Date.now() });
+    const inst = instructeurs.find(i => i.nom === instructeur);
+    if (inst) await updateDoc(doc(db, 'instructeurs', inst.id), { count: increment(1) });
+    // Reset form
+    $id('nomRP').value = ''; $id('steamID').value = '';
+    $id('instructeurSelect').value = '';
+    document.querySelector('input[name="doc"][value="Pas Donné"]').checked = true;
+    document.querySelectorAll('input[name="souffle"]').forEach(r => r.checked = false);
+    showToast('Aspirant enregistré avec succès.');
+  } catch(e) { showToast('Erreur lors de l\'enregistrement.', true); console.error(e); }
+  btn.disabled = false; btn.textContent = '✦ Enregistrer l\'Aspirant';
+});
+
+async function supprimerRegistre(id, instructeurNom) {
+  try {
+    await deleteDoc(doc(db, 'registres', id));
+    const inst = instructeurs.find(i => i.nom === instructeurNom);
+    if (inst && (inst.count||0) > 0) await updateDoc(doc(db, 'instructeurs', inst.id), { count: increment(-1) });
+    showToast('Registre supprimé.');
+  } catch(e) { showToast('Erreur lors de la suppression.', true); }
+}
+
+// Ajouter instructeur
+$id('btnAddInst').addEventListener('click', ajouterInstructeur);
+$id('newInstNom').addEventListener('keydown', e => { if (e.key === 'Enter') ajouterInstructeur(); });
+
+async function ajouterInstructeur() {
+  const nom = $id('newInstNom').value.trim();
+  if (!nom) return;
+  if (instructeurs.find(i => i.nom === nom)) return showToast('Cet instructeur existe déjà.', true);
+  try {
+    await addDoc(instructeursCol, { nom, count: 0 });
+    $id('newInstNom').value = '';
+    showToast(`${nom} ajouté.`);
+  } catch(e) { showToast('Erreur lors de l\'ajout.', true); }
+}
+
+async function supprimerInstructeur(id, nom) {
+  try {
+    await deleteDoc(doc(db, 'instructeurs', id));
+    showToast(`${nom} retiré.`);
+  } catch(e) { showToast('Erreur lors de la suppression.', true); }
+}
+
+// Recherche
+$id('searchInput').addEventListener('input', renderRegistres);
+
+// Modal reset
+$id('btnReset').addEventListener('click', () => $id('modalReset').classList.add('active'));
+$id('btnCancelReset').addEventListener('click', () => $id('modalReset').classList.remove('active'));
+$id('btnConfirmReset').addEventListener('click', async () => {
+  $id('modalReset').classList.remove('active');
+  try {
+    const batch = writeBatch(db);
+    const snap = await getDocs(registresCol);
+    snap.docs.forEach(d => batch.delete(d.ref));
+    const instSnap = await getDocs(instructeursCol);
+    instSnap.docs.forEach(d => batch.update(d.ref, { count: 0 }));
+    await batch.commit();
+    showToast('Registres remis à zéro.');
+  } catch(e) { showToast('Erreur lors de la remise à zéro.', true); }
+});
+
+// Date par défaut
+$id('dateFormation').value = new Date().toISOString().split('T')[0];
+
+// Masquer loader après 6s si problème
+setTimeout(() => $id('loader').classList.add('hidden'), 6000);
+</script>
+</body>
+</html>
